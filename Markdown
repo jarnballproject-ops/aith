@@ -1,0 +1,718 @@
+“เรากำลังสร้างระบบร้านหมูกระทะครบวงจร ไม่ใช่แค่เว็บสั่งอาหาร” โดยระบบจะแบ่งเป็น 3 ส่วนหลัก คือ Customer, Staff และ Admin
+
+Customer Web คือส่วนที่ลูกค้าใช้งาน ตั้งแต่เข้าร้านจนจบการกิน ลูกค้ามาถึงร้านแล้วรับคิว จากนั้นพนักงานจัดโต๊ะให้และเปิด Visit พร้อม QR ประจำโต๊ะ ลูกค้าสแกน QR แล้วระบบจะรู้ทันทีว่าเป็นโต๊ะไหนและเป็นการใช้บริการครั้งไหน จากนั้นลูกค้าสามารถดูเมนู สั่งอาหาร ดูสถานะอาหาร เรียกพนักงาน ดูเวลาที่ใช้บริการ ดูยอดเงิน และชำระเงินได้ โดยไม่จำเป็นต้องสมัครสมาชิกก็สามารถใช้งานได้ ส่วนการสมัครสมาชิกจะเอาไว้สำหรับสะสมแต้ม โปรโมชั่น และดูประวัติการใช้บริการ
+
+Staff Web คือระบบที่พนักงานใช้บริหารร้านแบบ Real-time โดย Dashboard จะแสดงภาพรวม เช่น ตอนนี้มีลูกค้ารอคิวกี่คน โต๊ะว่างกี่โต๊ะ มีโต๊ะที่กำลังกินกี่โต๊ะ มีอาหารรอเสิร์ฟกี่รายการ และมีลูกค้าเรียกพนักงานกี่คน พนักงานสามารถจัดการตั้งแต่เรียกคิว เลือกโต๊ะ เปิด Visit และสร้าง QR ให้ลูกค้า รวมถึงรับออเดอร์จากลูกค้าแล้วจัดการสถานะอาหารตั้งแต่กำลังเตรียมจนถึงเสิร์ฟแล้ว
+
+Admin / Manager คือระบบหลังบ้านสำหรับเจ้าของหรือผู้จัดการ ใช้ควบคุมภาพรวมของร้าน เช่น จัดการเมนู ราคา หมวดหมู่ แพ็กเกจบุฟเฟต์ Add-on โต๊ะ พนักงาน โปรโมชั่น สมาชิก และออเดอร์ รวมถึงดูยอดขายและข้อมูลต่าง ๆ ของร้าน เช่น วันนี้ขายได้เท่าไร มีลูกค้ากี่คน เมนูไหนขายดีที่สุด ช่วงเวลาไหนลูกค้าเยอะ และโต๊ะถูกใช้งานมากน้อยแค่ไหน
+
+ส่วนที่เป็น หัวใจของระบบ คือ “Visit” เพราะเราต้องการให้ระบบรู้ว่าลูกค้าหนึ่งกลุ่มเข้ามาใช้บริการครั้งไหน ตั้งแต่รับคิว → ได้โต๊ะ → สั่งอาหาร → กิน → เช็กบิล → จ่ายเงิน → ปิดโต๊ะ ข้อมูลทั้งหมดจะเชื่อมอยู่ใน Visit เดียว ทำให้ทั้งลูกค้า พนักงาน ออเดอร์ โต๊ะ และยอดขายทำงานต่อกันได้
+
+สรุปสั้น ๆ เวลาอธิบายเพื่อนคือ “เราจะทำระบบร้านหมูกระทะที่ลูกค้าใช้เว็บจัดการตั้งแต่รับคิวจนจ่ายเงิน พนักงานใช้ระบบเดียวกันบริหารคิว โต๊ะ และออเดอร์ ส่วนเจ้าของร้านใช้หลังบ้านจัดการเมนู พนักงาน โปรโมชั่น และดูยอดขาย โดยทุกอย่างเชื่อมกันแบบ Real-time” นี่คือภาพของ หมากระทุปุ๊ป๊ะ — หิวปุ๊บ ป๊ะหมูกระทะปั๊บ ครับ
+
+เราเริ่มจาก ภาพผลิตภัณฑ์จริง (Product Architecture) ไม่ใช่แค่ลิสต์ฟีเจอร์ ผมแนะนำให้ขยายจากโครงนี้เป็น 3 ส่วนหลักเหมือนเดิม แต่เพิ่มระบบที่จำเป็นต่อการทำร้านจริงเข้าไปดังนี้
+
+หมากระทุปุ๊ป๊ะ
+“หิวปุ๊บ ป๊ะหมูกระทะปั๊บ”
+ภาพผลิตภัณฑ์จริง
+
+ผมจะวางระบบเป็น 3 ส่วนใน Product เดียว
+
+1. Customer Web
+
+ลูกค้ามาถึงร้าน
+→ พนักงานจัดคิว
+→ ได้โต๊ะ
+→ พนักงานให้ใบเสร็จ/บัตรโต๊ะที่มี QR
+→ ลูกค้าสแกน
+→ ระบบรู้ว่าอยู่ โต๊ะไหน + Visit ไหน
+→ เลือกอาหาร
+→ ส่งออเดอร์
+→ ดูสถานะอาหาร
+→ เรียกพนักงาน
+→ ดูเวลาการใช้บริการ
+→ ดูยอดเงิน
+→ ชำระเงิน
+→ จบการใช้บริการ
+
+ระบบที่ต้องมี
+
+Queue
+
+ดูคิวปัจจุบัน
+เลขคิว
+จำนวนคน
+เวลารอโดยประมาณ
+สถานะคิว
+แจ้งเตือนเมื่อใกล้ถึง
+Check-in
+
+Table
+
+โต๊ะ
+จำนวนที่นั่ง
+QR ประจำโต๊ะ
+สถานะโต๊ะ
+เวลาที่เริ่มใช้โต๊ะ
+เวลาที่เหลือ
+
+Ordering
+
+เมนู
+หมวดหมู่
+รายละเอียดอาหาร
+รูปอาหาร
+ราคา
+Add-on
+หมายเหตุ
+ตะกร้า
+สั่งเพิ่ม
+สั่งซ้ำ
+
+Order Tracking
+
+รับออเดอร์ → กำลังเตรียม → พร้อมเสิร์ฟ → เสิร์ฟแล้ว
+
+Service
+
+เรียกพนักงาน
+ขอเติมน้ำ
+ขอจาน/อุปกรณ์
+ขอเช็กบิล
+แจ้งปัญหา
+
+Bill
+
+รายการอาหาร
+จำนวน
+ราคา
+ส่วนลด
+ค่าบริการถ้ามี
+ยอดรวม
+ประวัติการสั่ง
+
+Membership
+
+ลูกค้า ไม่จำเป็นต้องสมัครสมาชิกเพื่อกิน
+
+แต่ Login แล้วจะสามารถ:
+
+สะสมแต้ม
+ใช้สิทธิ์สมาชิก
+ดูประวัติการกิน
+รับโปรโมชั่น
+รีวิวร้าน
+2. Staff Web
+
+Dashboard หลัก:
+
+คิวรอ 5 | โต๊ะว่าง 4 | กำลังกิน 12 | รอเสิร์ฟ 3 | เรียกพนักงาน 2
+
+Queue Management
+
+พนักงานสามารถ:
+
+เรียกคิว → ตรวจจำนวนคน → เลือกโต๊ะ → เปิด Visit → กำหนดโต๊ะ → พิมพ์/แสดง QR
+
+ระบบควรช่วยแนะนำโต๊ะที่เหมาะสม เช่น
+
+คิว A025
+4 คน
+แนะนำ: โต๊ะ A12
+
+เพื่อไม่ให้พนักงานต้องคิดเองทุกครั้ง
+
+Table Management
+
+แสดงผังร้านแบบ Real-time
+
+ว่าง → รอลูกค้า → กำลังกิน → เรียกเช็กบิล → ทำความสะอาด → พร้อม
+
+พนักงานสามารถ:
+
+เปิดโต๊ะ
+ปิดโต๊ะ
+ย้ายโต๊ะ
+รวมโต๊ะ
+แยกโต๊ะ
+เปลี่ยนสถานะ
+ดูเวลาที่ใช้โต๊ะ
+Order Management
+
+ตัวอย่าง:
+
+โต๊ะ A12 → Order #1024 → รอจัดอาหาร
+
+→ กำลังเตรียม
+
+→ พร้อมเสิร์ฟ
+
+→ เสิร์ฟแล้ว
+
+สามารถกรองตาม:
+
+โต๊ะ
+Order
+สถานะ
+เวลา
+ครัว/Station
+Service Call
+
+เมื่อมีลูกค้ากดเรียก:
+
+โต๊ะ A12
+ขอเรียกพนักงาน
+“ขอเติมน้ำ”
+
+พนักงานกด:
+
+รับงาน → กำลังไป → เสร็จแล้ว
+
+เพื่อให้ระบบรู้ว่างานไหนยังค้างอยู่
+
+Checkout
+
+พนักงานสามารถ:
+
+เปิดบิล
+ตรวจรายการ
+แก้ไขรายการตามสิทธิ์
+ส่วนลด
+แยกบิล
+รวมบิล
+รับชำระ
+พิมพ์ใบเสร็จ
+ปิด Visit
+3. Admin / Manager
+
+เป็นระบบบริหารทั้งหมดของร้าน
+
+Menu Management
+
+เมนู → หมวดหมู่ → รูปอาหาร → ราคา → รายละเอียด → เปิด/ปิดเมนู → Add-on
+
+เพิ่มส่วนสำคัญ:
+
+Ingredient Mapping
+
+เช่น
+
+กุ้งสด 1 จาน
+↓
+ตัด Stock กุ้งตามสูตร
+
+ทำให้ยอดขายเชื่อมกับ Inventory ได้
+
+Package / Buffet
+
+จัดการ:
+
+แพ็กเกจ
+ราคา
+จำนวนคน
+ระยะเวลาการกิน
+เงื่อนไข
+เมนูที่รวมในแพ็กเกจ
+Add-on
+
+ตรงนี้สำคัญมากสำหรับร้านหมูกระทะ เพราะในอนาคตเราสามารถมีทั้ง A La Carte + Buffet + Set Menu ได้
+
+Inventory
+
+ระบบวัตถุดิบ:
+
+รับเข้า → Stock → เบิกใช้ → ตัดจากสูตร → ตรวจนับ → เหลือจริง
+
+มี:
+
+วัตถุดิบ
+หน่วย
+ต้นทุน
+จำนวนคงเหลือ
+Minimum Stock
+ประวัติการเคลื่อนไหว
+วัตถุดิบใกล้หมด
+Purchasing
+
+วัตถุดิบใกล้หมด → สร้างใบสั่งซื้อ → Supplier → รับสินค้า → เพิ่ม Stock
+
+Employee
+พนักงาน
+ตำแหน่ง
+สิทธิ์
+สาขา
+ตารางงาน
+ประวัติการทำงาน
+
+ควรทำ Role-Based Permission เช่น
+
+Owner > Manager > Cashier > Staff > Kitchen
+
+เพื่อไม่ให้พนักงานทุกคนเข้าถึงข้อมูลสำคัญได้ทั้งหมด
+
+Promotion
+ส่วนลด
+Coupon
+Set Promotion
+Happy Hour
+โปรโมชั่นสมาชิก
+เงื่อนไขการใช้
+วันเริ่ม/วันสิ้นสุด
+Member / CRM
+
+เก็บ:
+
+ลูกค้า
+แต้ม
+ระดับสมาชิก
+ประวัติการใช้บริการ
+ยอดใช้จ่ายสะสม
+โปรโมชั่นที่ได้รับ
+4. ระบบที่ผมแนะนำให้เพิ่มเป็น “Core System”
+
+มี 4 ระบบที่อยู่เบื้องหลังทั้ง 3 ส่วน และควรออกแบบตั้งแต่ต้น
+
+A. Visit Management
+
+นี่เป็นตัวเชื่อมสำคัญมาก
+
+ทุกครั้งที่ลูกค้ามากินจะสร้าง:
+
+Visit #V20260831001
+
+เชื่อมกับ:
+
+Customer → Queue → Table → Orders → Bill → Payment
+
+ทำให้ระบบรู้ว่า ลูกค้าคนนี้กำลังใช้บริการครั้งไหน และทุก Order เป็นของ Visit ไหน
+
+B. Notification
+
+ระบบแจ้งเตือน:
+
+คิวใกล้ถึง
+ถึงคิว
+ได้โต๊ะ
+อาหารพร้อม
+พนักงานกำลังมา
+ใกล้หมดเวลา
+โปรโมชั่น
+ใบเสร็จ
+C. Payment
+
+รองรับการออกแบบให้เชื่อม:
+
+เงินสด
+QR Payment
+บัตร
+E-Payment
+
+และต้องมีสถานะ:
+
+Pending → Paid → Failed → Refunded
+
+D. Audit Log
+
+ระบบต้องเก็บว่า:
+
+ใครแก้ราคา
+ใครยกเลิก Order
+ใครให้ส่วนลด
+ใครย้ายโต๊ะ
+ใครปิดบิล
+
+นี่สำคัญมากเมื่อร้านเริ่มมีหลายสาขา เพราะช่วยตรวจสอบความผิดพลาดและการทุจริตได้
+
+ภาพรวม Product ทั้งหมด
+                    หมากระทุปุ๊ป๊ะ
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+ Customer Web         Staff Web        Admin / Manager
+        │                  │                  │
+   ┌────┼────┐       ┌─────┼─────┐      ┌─────┼─────┐
+   │    │    │       │     │     │      │     │     │
+ Queue Table Order   Queue Table Order  Menu Stock Staff
+   │    │    │       │     │     │      │     │     │
+   └────┴────┘       └─────┴─────┘      └─────┴─────┘
+             \            │             /
+              \           │            /
+                ─── Visit Management ───
+                         │
+              ┌──────────┼──────────┐
+              │          │          │
+           Payment   Notification  Audit
+
+และ Database ที่เราเคยมีจากต้นแบบ เช่น menus, ingredients, menu_ingredients, suppliers, purchase_orders, employees สามารถนำมาเป็นฐานของฝั่ง Back Office ได้ แต่ต้องขยายตารางสำหรับ Queue / Table / Visit / Order / Payment / Customer เพื่อรองรับ Product จริง
+
+Roadmap — หมากระทุปุ๊ป๊ะ
+Phase 0 — Business & System Design
+
+ระยะ: 1–2 สัปดาห์
+
+กำหนดสิ่งที่ระบบต้องทำก่อนเริ่มเขียนจริง
+
+Brand / Concept
+Customer Journey
+Queue Flow
+Table Flow
+Visit Flow
+Order Flow
+Payment Flow
+Staff Workflow
+Menu / Package / Add-on
+User Roles & Permission
+Business Rules
+Database ERD
+API Specification
+Wireframe
+
+ผลลัพธ์: System Blueprint + ERD + Prototype
+
+Phase 1 — Core Foundation
+
+ระยะ: 2–3 สัปดาห์
+
+สร้าง Backend และฐานข้อมูล
+
+Core Entity:
+
+Branch
+Customer
+Employee
+Table
+Queue
+Reservation
+Visit
+Menu
+Menu Category
+Order
+Order Item
+Payment
+
+ระบบพื้นฐาน:
+
+Authentication
+Role & Permission
+Branch
+Table
+Customer
+Visit
+Audit Log
+API
+Real-time infrastructure
+
+เป้าหมาย: ระบบเริ่มเข้าใจว่า “ใคร → สาขาไหน → คิวอะไร → โต๊ะไหน → Visit ไหน”
+
+Phase 2 — Queue + Table
+
+ระยะ: 2–3 สัปดาห์
+
+นี่คือ MVP Core
+
+Customer:
+
+เลือกสาขา
+→ รับคิว
+→ ดูคิว
+→ ดูเวลารอ
+→ แจ้งเตือน
+→ Check-in
+
+Staff:
+
+ดูคิว
+→ เรียกคิว
+→ เลือกโต๊ะ
+→ เปิด Visit
+→ สร้าง QR
+
+Table:
+
+ว่าง
+→ จอง/รอ
+→ ใช้งาน
+→ เช็กบิล
+→ ทำความสะอาด
+→ ว่าง
+
+เป้าหมาย: ลูกค้าเดินเข้าร้านจนได้นั่งโต๊ะได้ครบ
+
+Phase 3 — Customer Ordering
+
+ระยะ: 2–3 สัปดาห์
+
+Customer Web:
+
+Scan QR
+→ ตรวจโต๊ะ
+→ ตรวจ Visit
+→ Menu
+→ Cart
+→ Confirm Order
+
+เพิ่ม:
+
+Menu
+Category
+Add-on
+หมายเหตุ
+Order history
+สั่งเพิ่ม
+สั่งซ้ำ
+เรียกพนักงาน
+
+Staff:
+
+Order Dashboard
+Service Call
+Order Status
+
+เป้าหมาย: ลูกค้านั่งโต๊ะแล้วสั่งอาหารเองได้ทั้งหมด
+
+Phase 4 — Kitchen + Serving
+
+ระยะ: 2 สัปดาห์
+
+สร้าง Kitchen Display System
+
+NEW
+ ↓
+PREPARING
+ ↓
+READY
+ ↓
+SERVED
+
+แยก Station ได้ เช่น:
+
+Kitchen
+Grill
+Drink
+Dessert
+
+พนักงานเห็น:
+
+A12 / Order #1024
+กุ้ง × 2
+หมู × 3
+น้ำ × 2
+
+และลูกค้าเห็นสถานะเดียวกันผ่าน Customer Web
+
+Phase 5 — Billing + Payment
+
+ระยะ: 1–2 สัปดาห์
+
+Order
+→ Bill
+→ Discount
+→ Payment
+→ Receipt
+→ Close Visit
+
+รองรับ:
+
+เงินสด
+QR Payment
+บัตร
+ส่วนลด
+Coupon
+แยกบิล
+รวมบิล
+Refund
+
+เมื่อปิด Visit:
+
+Table
+→ Cleaning
+→ Available
+Phase 6 — Back Office
+
+ระยะ: 3–4 สัปดาห์
+
+Admin / Manager
+
+Menu
+Menu
+Category
+ราคา
+รูป
+เปิด/ปิด
+Package
+Add-on
+Inventory
+Ingredient
+→ Recipe
+→ Stock
+→ Stock Movement
+Purchasing
+Supplier
+→ Purchase Order
+→ Receive
+→ Stock
+Employee
+Employee
+Position
+Permission
+Branch
+Shift
+Promotion
+Coupon
+Discount
+Campaign
+Happy Hour
+Phase 7 — Dashboard & Analytics
+
+ระยะ: 2 สัปดาห์
+
+Dashboard เจ้าของร้าน:
+
+ยอดขายวันนี้
+ลูกค้าวันนี้
+โต๊ะใช้งาน
+Average Bill
+เมนูขายดี
+ช่วง Peak
+เวลารอเฉลี่ย
+ยอดยกเลิก
+ต้นทุนอาหาร
+
+เพิ่ม Analytics:
+
+Sales
+Customer
+Queue
+Table Utilization
+Menu Performance
+Staff Performance
+Food Cost
+Phase 8 — Pilot
+
+ระยะ: 2–4 สัปดาห์
+
+เอาไปทดลองกับ 1 สาขา
+
+วัด KPI จริง:
+
+เวลาเฉลี่ยจากรับคิว → ได้โต๊ะ
+เวลาเฉลี่ยต่อโต๊ะ
+Order ต่อ Visit
+Average Bill
+เวลา Order → Served
+Queue abandonment
+No-show
+จำนวน Service Call
+ระบบล่ม/ผิดพลาด
+
+จากนั้นแก้ Pain Point ก่อนเปิดหลายสาขา
+
+Phase 9 — Production & Multi-Branch
+
+เมื่อระบบนิ่งแล้วค่อยเพิ่ม:
+
+Multi Branch
+Central Menu
+Central Inventory
+Branch-specific pricing
+Multi-branch reporting
+Member CRM
+Loyalty
+Promotion Engine
+Staff Management
+Advanced Analytics
+Tech Spec คร่าว ๆ
+
+ผมแนะนำ Architecture แบบนี้:
+
+Customer Web
+       │
+Staff Web ─────── API
+       │           │
+Admin Web          │
+                   ↓
+              Backend API
+                   │
+        ┌──────────┼──────────┐
+        ↓          ↓          ↓
+    PostgreSQL   Redis    WebSocket
+        │
+        ↓
+   Business Logic
+        │
+ ┌──────┼──────┬────────┐
+ ↓      ↓      ↓        ↓
+Queue  Table  Order   Payment
+ ↓      ↓      ↓        ↓
+Notification  Kitchen  Receipt
+Frontend
+
+ผมแนะนำ:
+
+Next.js + TypeScript
+
+ใช้ร่วมกันได้ทั้ง Customer Web, Staff Web และ Admin Web แต่แยก Application/Permission ตามบทบาท
+
+Backend
+
+NestJS + TypeScript
+
+เหมาะกับระบบที่มี Module เยอะและต้องการโครงสร้างชัดเจน
+
+Database
+
+PostgreSQL
+
+เป็นฐานข้อมูลหลัก
+
+Real-time
+
+WebSocket + Redis
+
+ใช้กับ:
+
+Queue
+Table
+Order
+Kitchen
+Service Call
+
+เช่นพนักงานกด:
+
+“เรียก A023”
+
+ลูกค้าจะได้รับสถานะใหม่ทันทีโดยไม่ต้อง Refresh
+
+MVP ที่ควรสร้างจริงก่อน
+
+ถ้าต้องการลดงบและเวลา ผมจะตัด MVP เหลือแค่นี้:
+
+Customer
+
+Queue → Check-in → Table → QR → Menu → Order → Status → Call Staff → Bill
+
+Staff
+
+Queue → Table → Visit → Order → Kitchen → Serve → Checkout
+
+Admin
+
+Menu → Table → Employee → Basic Sales
+
+แค่นี้ก็สามารถจำลอง ร้านหมากระทุปุ๊ป๊ะ 1 สาขาแบบครบวงจร ได้แล้ว
+
+ส่วน สมาชิก / แต้ม / Promotion / Inventory / Purchasing / Analytics ขั้นสูง / Multi-branch ให้เป็น Phase 2 หลังจากพิสูจน์ว่าระบบหน้าร้านทำงานจริง
+
+ลำดับความสำคัญ
+
+P0 — ต้องมี
+Queue / Table / Visit / Order / Kitchen / Payment
+
+P1 — ควรมี
+Reservation / Notification / Service Call / Menu Management / Dashboard
+
+P2 — เพิ่มภายหลัง
+Member / Loyalty / Promotion / Inventory / Purchasing / Analytics
+
+P3 — เมื่อขยายธุรกิจ
+Multi-branch / CRM / Advanced BI / AI Forecasting
