@@ -716,3 +716,13 @@ Member / Loyalty / Promotion / Inventory / Purchasing / Analytics
 
 P3 — เมื่อขยายธุรกิจ
 Multi-branch / CRM / Advanced BI / AI Forecasting
+นี่ครับ — ทดสอบล็อกอินและสิทธิ์จริงทุกบัญชีแล้ว
+
+อีเมล	รหัสผ่าน	Role	/staff	/admin
+admin@puppa.test	puppa-admin-1234	owner	✓	✓
+manager@puppa.test	puppa-demo-1234	owner	✓	✓
+staff@puppa.test	puppa-staff-1234	staff	✓	✗
+kitchen@puppa.test	puppa-kitchen-1234	kitchen	✓	✗
+manager@puppa.test เป็นบัญชีเดิมที่สร้างไว้ตอนทดสอบ ส่วนอีก 3 ตัวผมเพิ่งสร้างเพิ่มให้ครบทุก role — ทุกบัญชียืนยันอีเมลแล้ว ล็อกอินได้เลยไม่ต้องรอเมล
+
+ผลทดสอบสิทธิ์ (ยิง API ตรงไม่ผ่าน UI):
